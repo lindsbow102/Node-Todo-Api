@@ -33,7 +33,7 @@ app.get('/todos', (req, res) => {
 
 // GET /todos/12341234
 app.get('/todos/:id', (req, res) => {
-    var id = req.params.id;
+    const id = req.params.id;
     
     if (!ObjectID.isValid(id)) {
         return res.status(404).send();
@@ -45,9 +45,29 @@ app.get('/todos/:id', (req, res) => {
         } 
 
         res.send({ todo });  // Using an object gives us more options down the line, like adding properties
+
     }).catch((e) => {
         res.status(400).send();
     });
+});
+
+app.delete('/todos/:id', (req, res) => {
+    const id = req.params.id;
+
+    if (!ObjectID.isValid(id)) {
+        return res.status(400).send();
+    }
+
+    Todo.findOneAndDelete(id).then((todo) => {
+        if (!todo) {
+            return res.status(404).send();
+        }
+
+        res.send(todo);
+
+    }).catch((e) => {
+        res.status(400).send();
+    })
 });
 
 app.listen(port, () => {
