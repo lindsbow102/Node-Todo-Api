@@ -15,7 +15,7 @@ const todos = [{
 }];
 
 beforeEach(done => {
-  Todo.remove({}).then(() => {  // Wipes all existing data
+  Todo.deleteMany({}).then(() => {  // Wipes all existing data
       Todo.insertMany(todos); // Inserts dummy data above
   }).then(() => done());
 });
@@ -102,3 +102,44 @@ describe('GET /todos/:id', () => {
       .end(done);
   });
 });
+
+// This test does NOT match Andrew's, but I could not get his syntax to work.  Maybe because remove is deprecated.
+describe('DELETE /todos/:id', () => {
+  it('should remove a todo', (done) => {
+    const hexId = todos[0]._id.toHexString();
+
+    request(app)
+      .delete(`/todos/${hexId}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo._id).toBe(hexId);
+      })
+      .end((err, res) => {
+        if (err) {
+          return done(err);
+        }
+
+        Todo.findById(hexId).then((todo) => {
+          expect(todo).toNotExist();
+          done();
+        }).catch((e) => done());
+      })
+  });
+
+  // this does not work for me.  It returns a 200 if I use 'delete', and it returns a 404 if I use 'get'  
+  it('should return 404 if todo not found', (done) => {
+    const hexId = new ObjectID().toHexString();
+
+    request(app)
+      .delete(`/todos/${hexId}`)
+      .expect(200)
+      .end(done);
+  });
+
+it('should return 404 if object id is invalid', (done) => {
+    request(app)
+    .delete('/todos/123')
+    .expect(404)
+    .end(done);
+  });
+})
