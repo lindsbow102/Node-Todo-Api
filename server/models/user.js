@@ -32,6 +32,7 @@ const UserSchema = new mongoose.Schema({
     }]
 });
 
+// Instance method
 UserSchema.methods.toJSON = function () {
     const user = this;
     const userObject  = user.toObject();
@@ -39,6 +40,7 @@ UserSchema.methods.toJSON = function () {
     return _.pick(userObject, ['_id', 'email']); 
 };
 
+// Instance method
 UserSchema.methods.generateAuthToken = function () {
     const user = this; // Arrow functions do not bind "this".  Must use regular functions
     const access = 'auth';
@@ -53,6 +55,24 @@ UserSchema.methods.generateAuthToken = function () {
     return user.save().then(() => {
         return token;
     });
+};
+
+// Model method
+UserSchema.statics.findByToken = function (token) {
+    const User = this;
+    let decoded;
+
+    try {
+        decoded = jwt.verify(token, 'abc123');
+    } catch (e) {
+        return Promise.reject();
+    }
+
+    return User.findOne({
+        '_id': decoded._id,
+        'tokens.token': token, // quotes are required when there is a dot in the value
+        'tokens.access': 'auth'
+    })
 }
 
 const User = mongoose.model('User', UserSchema);
